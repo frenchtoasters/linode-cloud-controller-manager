@@ -1,4 +1,9 @@
-IMG ?= linode/linode-cloud-controller-manager:canary
+PLATFORM ?= linux/amd64
+REGISTRY_NAME = index.docker.io/linode
+IMAGE_NAME = linode-cloud-controller-manager
+IMAGE_VERSION ?= canary
+IMAGE_TAG=$(REGISTRY_NAME)/$(IMAGE_NAME):$(IMAGE_VERSION)
+REV=$(shell git describe --long --tags --dirty)
 
 export GO111MODULE=on
 
@@ -48,9 +53,8 @@ imgname:
 	echo IMG=${IMG}
 
 .PHONY: docker-build
-# we cross compile the binary for linux, then build a container
-docker-build: build-linux
-	docker build . -t ${IMG}
+docker-build:
+	DOCKER_BUILDKIT=1 docker build --platform=$(PLATFORM) --progress=plain -t $(IMAGE_TAG) --build-arg REV=$(REV) -f Dockerfile .
 
 .PHONY: docker-push
 # must run the docker build before pushing the image
